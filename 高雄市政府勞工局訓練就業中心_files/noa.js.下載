@@ -1,0 +1,13 @@
+﻿$(window).on('load',function () {
+
+    $('a').each(function (index) {
+        if ($(this).text() == '') {
+            $(this).append('<p style="display:none">\u200C</p>');
+        }
+    });//使 a content都塞入看不到的東西 != empty
+
+    $('img:not([alt])').each(function (index) {
+        $(this).attr('alt', 'this img no desc');
+     });//使 a content都塞入看不到的東西 != empty
+
+});

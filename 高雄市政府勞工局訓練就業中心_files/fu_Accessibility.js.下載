@@ -1,0 +1,414 @@
+﻿/*! fu_Accessibility v1.2 | 2019 | johnnyyang */
+window.addEventListener('load', function () {
+    //Table 補ID、Headers
+    var $page_content, th_col, th_row, col_count, col, row, $td, $th;
+    //if (0 < $("table").length) {
+    //    var $table = $("table");
+    //    for (i = 0; i < $table.length; i++)
+    //        if (void 0 == $table.eq(i).attr("id") && $table.eq(i).attr("id", "table_" + i), $th = $table.eq(i).find("th"), 0 == $th.length)
+    //            for ($td = $table.eq(i).find("td"), j = 0; j < $td.length; j++)
+    //                if (row = $td.eq(j).parent().index() + 1, col = $td.eq(j).index() + 1, col_count = 0, 1 == row) void 0 == $td.eq(j).attr("id") && $td.eq(j).attr("id", "table_" + i + "_" + j);
+    //                else
+    //                    for (k = 0; k < $td.length; k++) {
+    //                        var td_row = $td.eq(k).parent().index() +
+    //                            1,
+    //                            td_col = $td.eq(k).index() + 1;
+    //                        1 == td_row && (col_count = void 0 == $td.eq(k).attr("colspan") ? Number(col_count) + Number(1) : Number(col_count) + Number($td.eq(k).attr("colspan")));
+    //                        if (col_count >= col) {
+    //                            void 0 == $td.eq(j).attr("headers") && $td.eq(j).attr("headers", $td.eq(k).attr("id"));
+    //                            break
+    //                        }
+    //                    } else {
+    //            void 0 == $table.eq(i).attr("id") && $table.eq(i).attr("id", "table_" + i);
+    //            $th = $table.eq(i).find("th");
+    //            for (j = 0; j < $th.length; j++) void 0 == $th.eq(j).attr("id") && $th.eq(j).attr("id", "table_" + i + "_" + j);
+    //            $td = $table.eq(i).find("td");
+    //            for (k =
+    //                0; k < $td.length; k++) {
+    //                row = $td.eq(k).parent().index() + 1;
+    //                col = $td.eq(k).index() + 1;
+    //                var row_count = 0;
+    //                for (l = col_count = 0; l < $th.length; l++)
+    //                    if (th_row = $th.eq(l).parent().index() + 1, th_col = $th.eq(l).index() + 1, 1 == th_row && (col_count = void 0 == $th.eq(l).attr("colspan") ? Number(col_count) + Number(1) : Number(col_count) + Number($th.eq(l).attr("colspan"))), col_count >= col) {
+    //                        void 0 == $td.eq(k).attr("headers") && $td.eq(k).attr("headers", $th.eq(l).attr("id"));
+    //                        break
+    //                    }
+    //                for (l = 0; l < $th.length; l++)
+    //                    if (th_row = $th.eq(l).parent().index() + 1, th_col =
+    //                        $th.eq(l).index() + 1, 1 == th_col && (row_count = void 0 == $th.eq(l).attr("rowspan") ? Number(row_count) + Number(1) : Number(row_count) + Number($th.eq(l).attr("rowspan"))), row_count >= row) {
+    //                        var rowheaders = $td.eq(k).attr("headers");
+    //                        void 0 == rowheaders ? void 0 == $td.eq(k).attr("headers") && $td.eq(k).attr("headers", $th.eq(l).attr("id")) : (rowheaders = rowheaders + " " + $th.eq(l).attr("id"), void 0 == $td.eq(k).attr("headers") && $td.eq(k).attr("headers", rowheaders));
+    //                        break
+    //                    }
+    //            }
+    //        }
+    //}
+
+
+    var New_Windows_Title = "[另開新視窗]", New_Popup_Title = "[開啟彈跳視窗]", New_Windows_LanguageSN = 12;
+    //取得語系
+    function GetLanguage() {
+        try {
+            var path = window.location.pathname.toLowerCase(); // 取得包含虛擬目錄的完整路徑
+            if (path.indexOf("/english") === -1 && path.indexOf("/en") === -1) {
+                New_Windows_LanguageSN = 1;
+            } else {
+                New_Windows_LanguageSN = 2;
+            }
+        } catch (e) {
+            New_Windows_LanguageSN = 1;
+        }
+
+        New_Windows_Title = New_Windows_LanguageSN === 1 ? "[另開新視窗]" : "[open a new window]";
+        New_Popup_Title = New_Windows_LanguageSN === 1 ? "[開啟彈跳視窗]" : "[Open a popup window]";
+    }
+    GetLanguage();
+
+    //判斷另開新視窗邏輯
+    function CheckIndex(b) {
+        var a = b.indexOf("開啟");
+        if (-1 != a) return a;
+        var a = b.indexOf("視窗");
+        if (-1 != a) return a;
+        a = b.indexOf("分頁");
+        if (-1 != a) return a;
+        a = b.indexOf("另開");
+        if (-1 != a) return a;
+        a = b.indexOf("新窗");
+        if (-1 != a) return a;
+        a = b.indexOf("new window");
+        return -1 != a ? a : a = b.indexOf("window")
+    }
+
+
+    var h2value = $('title').html().trim();
+    if (h2value == null || h2value == '' || h2value.length == 0) {
+        h2value = '標題項目';
+    }
+
+    //沒有圖標題的就加標題
+    $("img:not([alt])").each(function (index) {
+        $(this).attr("alt", h2value + "_" + index);
+    });
+    //如果是null 就取代為空值
+    $("img[alt='null'], img[alt='Null'], img[alt='NULL'] , img[alt=' ']").each(function (index) {
+        $(this).attr("alt", '');
+    });
+
+    //檢查所有連結
+    $('a').each(function (index) {
+        //加入title
+        var $atitle = $(this).attr('title');
+        var titlevalue = '';
+        if ($atitle == undefined || $atitle.length == 0) {
+            if ($(this).children().length > 0) {
+                titlevalue = $(this).text();
+                if (titlevalue == '') titlevalue = h2value + "_" + index;
+                if (titlevalue == '') titlevalue = ' ';
+            }
+            else if ($(this).children().length == 0 && $(this).text() != '') {
+                titlevalue = $(this).text();
+            }
+            else {
+                titlevalue = h2value + "_" + index;
+            }
+            if (titlevalue.trim() == '' && $(this).attr('name') != undefined) titlevalue = $(this).attr('name');
+            $(this).attr('title', titlevalue.trim());
+        }
+
+        //空<a>補內容
+        if ($(this).text() == '' && $(this).children().length == 0) {
+            $(this).append('<p style="font-size:0em; opacity:0;">' + $(this).attr('title') + '</p>');
+        }
+        var domain = window.location.origin.toLowerCase();
+
+        //外連網址補 target
+        if ($(this).attr('href') != null && $(this).attr('href').toLowerCase().startsWith('http') && $(this).attr('href').indexOf(domain) == -1 && $(this).attr('href') != '#' && $(this).attr('target') != "_blank") {
+            $(this).attr('target', "_blank");
+        }
+
+        //檢查是否加入新視窗
+        if ($(this).attr('target') == "_blank") {
+            if (CheckIndex($(this).attr('title')) == -1 && !$(this).hasClass('fancybox-buttons')) {
+                $(this).attr('title', $(this).attr('title') + New_Windows_Title);
+            }
+            else if (CheckIndex($(this).attr('title')) == -1 && $(this).hasClass('fancybox-buttons')) {//開啟彈跳視窗
+                $(this).attr('title', $(this).attr('title') + New_Popup_Title);
+            }
+        }
+
+        // <a> 標籤內之 IMG 替代文字為空即可 (邏輯:<a>內有圖片且子節點>1or有文字說明時，IMG之替代文字為空)
+        //if ($(this).find('img') != null && ($(this).children().length > 0) || $(this).text() != '') {
+        if ($(this).find('img') != null && ($(this).children().length > 0) || $(this).text() != '') {
+            if ($(this).text() == $(this).find('img').attr('alt')) {
+                $(this).find('img').attr('alt', '');
+            }
+        }
+
+
+        //<a>的連結強轉https
+        if ($(this).attr('ishttp') == undefined && $(this).attr('href') != null && $(this).attr('href').toLowerCase().startsWith('http') && !$(this).attr('href').toLowerCase().startsWith('https')) {
+            var $href = $(this).attr('href');
+            $(this).attr('href', 'https' + $href.substring(4));
+        }
+
+    });//使 a content都塞入看不到的東西 != empty
+
+    //如果有onkeypress進行移除
+    $("a[onkeypress]").each(function (index) {
+        $(this).removeAttr("onkeypress");
+    });
+
+    //回報問題隱藏
+    $(".btn-tool.btn-problem").each(function (index) {
+        $(this).attr("style", "display:none");
+    });
+
+    //移除沒用的行動版的h4 項目(會防礙無帳礙)
+    $('.base-mobile .search .in .hd .in h4').remove();
+
+    //沒有iframe沒有標題的就加標題
+    $("iframe").each(function (index) {
+        var title = '影音';
+        //console.log($(this).attr("src"));
+        if ($('div[class="photoandtext"] h4').html() != "") title = $('div[class="photoandtext"] h4').html();
+        if ($(this).attr("title") == null) $(this).attr("title", title);
+        //if ($(this).attr("title") == null && title == null && $(this).attr("src") != null && ($(this).attr("src").indexOf("youtu") > -1)) $(this).attr("title", 'youtube');
+        if ($(this).attr("title") == null && title == null && $(this).attr("data-src") != null && ($(this).attr("data-src").indexOf("youtu") > -1)) $(this).attr("title", 'youtube');
+        if ($(this).attr("title") == null && title == null && $(this).attr("data-src") != null && ($(this).attr("data-src").indexOf("Frame_PublicHearing") > -1)) $(this).attr("title", '公聽會');
+        if ($(this).attr("title") == null && title == null && $(this).attr("data-src") != null && ($(this).attr("data-src").indexOf("Frame_LiveVideo") > -1)) $(this).attr("title", '議會直播');
+        if ($(this).attr("title") == null && title == null && $(this).attr("data-src") != null && ($(this).attr("data-src").indexOf("IframeDetail") > -1)) $(this).attr("title", '本會專刊');
+        if ($(this).attr("title") == null && title == null) $(this).attr("title", 'Map');
+    });
+
+    //<font>取代成<span>   
+    $('font').each(function () {
+        $(this).replaceWith('<span>' + $(this).html() + '</span>');
+    });
+
+
+
+
+    //<center>取代成<span>    
+    $('center').each(function () {
+        $(this).replaceWith('<span style="text-align:center;">' + $(this).html() + '</span>');
+    });
+
+
+
+
+    //attr 含有 colspan 補上scope
+    $('[colspan]').eq(0).attr('scope', 'col');
+
+    //attr 含有 rowspan 補上scope
+    $('[rowspan]').eq(0).attr('scope', 'row');
+
+    $('style[id*="isPasted"]').html('');
+
+    //內容區 px to em 預設 16px = 1em
+    function pxtoem(x) {
+        var y = 16; //預設 16px = 1em
+        var result = "0";
+        if (x) {
+            result = x / y;
+        }
+        var size = Math.pow(10, 4);
+        result = Math.round(result * size) / size;
+        result = result + "em";
+        return result;
+    }
+
+    //<span>內之 style font-size px→em
+    if (0 < $("span").length) {
+        var $span = $("span");
+        for (i = 0; i < $span.length; i++) {
+            if ($span.eq(i).attr('style') != null && $span.eq(i).attr('style').toLowerCase().indexOf('font-size') != -1 && $span.eq(i).css('font-size').toLowerCase().indexOf('px') != -1) {
+                var px = $span.eq(i).css('font-size').toLowerCase().replace('px', '');
+                var em = pxtoem(px);
+                if (em != "0") $span.eq(i).css('font-size', em);
+            }
+        }
+    }
+
+    //<p>內之 style font-size px→em
+    if (0 < $("p").length) {
+        var $p = $("p");
+        for (i = 0; i < $p.length; i++) {
+            if ($p.eq(i).attr('style') != null && $p.eq(i).attr('style').toLowerCase().indexOf('font-size') != -1 && $p.eq(i).css('font-size').toLowerCase().indexOf('px') != -1) {
+                var px = $p.eq(i).css('font-size').toLowerCase().replace('px', '');
+                var em = pxtoem(px);
+                if (em != "0") $p.eq(i).css('font-size', em);
+            }
+        }
+    }
+
+    //<div>內之 style font-size px→em
+    if (0 < $("div").length) {
+        var $p = $("div");
+        for (i = 0; i < $p.length; i++) {
+            if ($p.eq(i).attr('style') != null && $p.eq(i).attr('style').toLowerCase().indexOf('font-size') != -1 && $p.eq(i).css('font-size').toLowerCase().indexOf('px') != -1) {
+                var px = $p.eq(i).css('font-size').toLowerCase().replace('px', '');
+                var em = pxtoem(px);
+                if (em != "0") $p.eq(i).css('font-size', em);
+            }
+        }
+    }
+
+    //<a>內之 style font-size px→em
+    if (0 < $("a").length) {
+        var $p = $("a");
+        for (i = 0; i < $p.length; i++) {
+            if ($p.eq(i).attr('style') != null && $p.eq(i).attr('style').toLowerCase().indexOf('font-size') != -1 && $p.eq(i).css('font-size').toLowerCase().indexOf('px') != -1) {
+                var px = $p.eq(i).css('font-size').toLowerCase().replace('px', '');
+                var em = pxtoem(px);
+                if (em != "0") $p.eq(i).css('font-size', em);
+            }
+        }
+    }
+
+    //下列請自行確認是否使用
+    //<ul>內之 style font-size px→em
+    if (0 < $("ul").length) {
+        var $p = $("ul");
+        for (i = 0; i < $p.length; i++) {
+            if ($p.eq(i).attr('style') != null && $p.eq(i).attr('style').toLowerCase().indexOf('font-size') != -1 && $p.eq(i).css('font-size').toLowerCase().indexOf('px') != -1) {
+                var px = $p.eq(i).css('font-size').toLowerCase().replace('px', '');
+                var em = pxtoem(px);
+                if (em != "0") $p.eq(i).css('font-size', em);
+            }
+        }
+    }
+    //<li>內之 style font-size px→em
+    if (0 < $("li").length) {
+        var $p = $("li");
+        for (i = 0; i < $p.length; i++) {
+            if ($p.eq(i).attr('style') != null && $p.eq(i).attr('style').toLowerCase().indexOf('font-size') != -1 && $p.eq(i).css('font-size').toLowerCase().indexOf('px') != -1) {
+                var px = $p.eq(i).css('font-size').toLowerCase().replace('px', '');
+                var em = pxtoem(px);
+                if (em != "0") $p.eq(i).css('font-size', em);
+            }
+        }
+    }
+    //<dd>內之 style font-size px→em
+    if (0 < $("dd").length) {
+        var $p = $("dd");
+        for (i = 0; i < $p.length; i++) {
+            if ($p.eq(i).attr('style') != null && $p.eq(i).attr('style').toLowerCase().indexOf('font-size') != -1 && $p.eq(i).css('font-size').toLowerCase().indexOf('px') != -1) {
+                var px = $p.eq(i).css('font-size').toLowerCase().replace('px', '');
+                var em = pxtoem(px);
+                if (em != "0") $p.eq(i).css('font-size', em);
+            }
+        }
+    }
+    //<dt>內之 style font-size px→em
+    if (0 < $("dt").length) {
+        var $p = $("dt");
+        for (i = 0; i < $p.length; i++) {
+            if ($p.eq(i).attr('style') != null && $p.eq(i).attr('style').toLowerCase().indexOf('font-size') != -1 && $p.eq(i).css('font-size').toLowerCase().indexOf('px') != -1) {
+                var px = $p.eq(i).css('font-size').toLowerCase().replace('px', '');
+                var em = pxtoem(px);
+                if (em != "0") $p.eq(i).css('font-size', em);
+            }
+        }
+    }
+    //<br>內之 style font-size px→em
+    if (0 < $("br").length) {
+        var $p = $("br");
+        for (i = 0; i < $p.length; i++) {
+            if ($p.eq(i).attr('style') != null && $p.eq(i).attr('style').toLowerCase().indexOf('font-size') != -1 && $p.eq(i).css('font-size').toLowerCase().indexOf('px') != -1) {
+                var px = $p.eq(i).css('font-size').toLowerCase().replace('px', '');
+                var em = pxtoem(px);
+                if (em != "0") $p.eq(i).css('font-size', em);
+            }
+        }
+    }
+    //<blockquote>內之 style font-size px→em
+    if (0 < $("blockquote").length) {
+        var $p = $("blockquote");
+        for (i = 0; i < $p.length; i++) {
+            if ($p.eq(i).attr('style') != null && $p.eq(i).attr('style').toLowerCase().indexOf('font-size') != -1 && $p.eq(i).css('font-size').toLowerCase().indexOf('px') != -1) {
+                var px = $p.eq(i).css('font-size').toLowerCase().replace('px', '');
+                var em = pxtoem(px);
+                if (em != "0") $p.eq(i).css('font-size', em);
+            }
+        }
+    }
+
+    //<th>內之 style font-size px→em
+    if (0 < $("th").length) {
+        var $p = $("th");
+        for (i = 0; i < $p.length; i++) {
+            if ($p.eq(i).attr('style') != null && $p.eq(i).attr('style').toLowerCase().indexOf('font-size') != -1 && $p.eq(i).css('font-size').toLowerCase().indexOf('px') != -1) {
+                var px = $p.eq(i).css('font-size').toLowerCase().replace('px', '');
+                var em = pxtoem(px);
+                if (em != "0") $p.eq(i).css('font-size', em);
+            }
+        }
+    }
+
+    //<pre>內之 style font-size px→em
+    if (0 < $("pre").length) {
+        var $p = $("pre");
+        for (i = 0; i < $p.length; i++) {
+            if ($p.eq(i).attr('style') != null && $p.eq(i).attr('style').toLowerCase().indexOf('font-size') != -1 && $p.eq(i).css('font-size').toLowerCase().indexOf('px') != -1) {
+                var px = $p.eq(i).css('font-size').toLowerCase().replace('px', '');
+                var em = pxtoem(px);
+                if (em != "0") $p.eq(i).css('font-size', em);
+            }
+        }
+    }
+    //檔案轉檔(Temp)
+    $(".base-section > div:nth-child(1) > div:nth-child(1) > div:nth-child(1) a").each(function () {
+        var a = $(this).attr("href");
+        if (null != a && -1 != a.indexOf('http'))
+            for (var c = ["doc", "xls", "ppt"], b = c.length - 1; 0 <= b; b--) - 1 != a.indexOf(c[b]) && $(".page-content > div:nth-child(1) > div:nth-child(1) > div:nth-child(1)").append('<a href="' + a.replace('docx', 'pdf').replace('doc', 'pdf').replace('xlsx', 'pdf').replace('xls', 'pdf').replace('pptx', 'pdf').replace('ppt', 'pdf') + '" style="font-size: 0em; opacity:0;">' + $(this).text() + "</a>")
+    });
+    $('.highcharts-container > svg:nth-child(1)').attr('role', 'img');//svg加上標示圖片
+    $('.highcharts-container > svg:nth-child(1)').attr('aria-hidden', true);//svg隱藏不讓報讀軟體讀取
+    $('#content_middle').attr('role', 'main');//標註主要內容
+
+    setTimeout(function () {
+        $('.slider_model .ctrl_dot_box ul li a').css('font-size', '0px'); //banner隱藏點選豆豆文字
+        //如果banner連結a為無連結，移除href屬性不讓他點
+        $('.slider_model a').filter(function () {
+            return $(this).attr('href')?.trim() === '#';
+        }).attr('href', '');
+    }, 1000);
+
+    //修改漢堡選單focus順序
+    let isNarrow = false;//當螢幕變小時執行一遍
+    function checkWindowWidth() {
+        const currentWidth = $(window).width();
+        if (currentWidth < 650 && !isNarrow) {
+            isNarrow = true;
+            console.log('第一次變成小於 650px，執行程式碼');
+            // 寬度變小後要執行的動作
+            // 在視窗寬度小於 550px 時執行的程式
+            var focusableElements = $('a[href], button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
+            // 循環遍歷每個可 focus 的元素，動態設置 tabindex
+            focusableElements.each(function (index) {
+                // index 是從 0 開始的，所以需要加 1 來設置 tabindex
+                var tabindex = index + 1;
+                $(this).attr('tabindex', tabindex);
+            });
+            var tagsKeyWordsIndex = parseInt($('#tagsKeyWords').attr('tabindex'));//抓取搜尋文字框編號
+            var divSearch_aLength = $('#divSearch').find('a').length + 1;//抓取熱門搜尋連結數量+進修搜尋
+            focusableElements.each(function (index) {
+                // 調換focus 元素的 tabindex
+                if (index == tagsKeyWordsIndex - 1) {//搜尋文字框
+                    $(this).attr('tabindex', tagsKeyWordsIndex + 1);
+                } else if (index == tagsKeyWordsIndex) {//搜尋按鈕
+                    $(this).attr('tabindex', tagsKeyWordsIndex + 2);
+                } else if (index == tagsKeyWordsIndex + divSearch_aLength + 1) {//漢堡選單
+                    $(this).attr('tabindex', tagsKeyWordsIndex);
+                }
+            });
+        } else if (currentWidth >= 650 && isNarrow) {
+            isNarrow = false; // 回到大於等於 650px 的狀態
+        }
+    }
+    $(document).ready(function () {
+        checkWindowWidth();
+        $(window).on('resize', checkWindowWidth);
+    });
+});
